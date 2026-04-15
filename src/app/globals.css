@@ -49,29 +49,29 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: oklch(0.15 0.01 275);
+  --foreground: oklch(0.95 0.01 275);
+  --card: oklch(0.22 0.01 275);
+  --card-foreground: oklch(0.96 0.01 275);
+  --popover: oklch(0.2 0.01 275);
+  --popover-foreground: oklch(0.96 0.01 275);
+  --primary: oklch(0.84 0.02 275);
+  --primary-foreground: oklch(0.17 0.01 275);
+  --secondary: oklch(0.28 0.01 275);
+  --secondary-foreground: oklch(0.95 0.01 275);
+  --muted: oklch(0.26 0.01 275);
+  --muted-foreground: oklch(0.78 0.01 275);
+  --accent: oklch(0.3 0.02 275);
+  --accent-foreground: oklch(0.95 0.01 275);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --border: oklch(0.42 0.01 275 / 45%);
+  --input: oklch(0.34 0.01 275 / 60%);
+  --ring: oklch(0.7 0.01 275);
+  --chart-1: oklch(0.76 0.12 270);
+  --chart-2: oklch(0.68 0.09 230);
+  --chart-3: oklch(0.62 0.08 305);
+  --chart-4: oklch(0.54 0.06 270);
+  --chart-5: oklch(0.44 0.04 250);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -123,8 +123,25 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 8% 6%, color-mix(in oklab, var(--chart-1) 42%, transparent) 0%, transparent 34%),
+      radial-gradient(circle at 90% 8%, color-mix(in oklab, var(--chart-3) 32%, transparent) 0%, transparent 30%),
+      linear-gradient(180deg, color-mix(in oklab, var(--background) 94%, black 6%), var(--background) 52%);
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  .glass-surface {
+    background: color-mix(in oklab, var(--card) 78%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid color-mix(in oklab, var(--border) 80%, white 20%);
+    box-shadow:
+      0 8px 30px color-mix(in oklab, black 76%, transparent),
+      inset 0 1px 0 color-mix(in oklab, white 28%, transparent);
   }
 }

@@ -1,36 +1,153 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cal Scheduler
 
-## Getting Started
+Cal.com-style scheduling platform built with Next.js App Router, TypeScript, Tailwind, ShadCN UI, Prisma, and PostgreSQL.
 
-First, run the development server:
+## 1) Project Setup
 
 ```bash
+npm install
+cp .env.example .env
+npm run prisma:migrate -- --name init
+npm run prisma:generate
+npm run prisma:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App runs on `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 2) Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cal_scheduler?schema=public"
+SMTP_HOST=""
+SMTP_PORT="587"
+SMTP_USER=""
+SMTP_PASS=""
+EMAIL_FROM="noreply@calclone.dev"
+APP_URL="http://localhost:3000"
+RESCHEDULE_TOKEN_SECRET="replace-with-strong-random-secret"
+```
 
-## Learn More
+## 3) Database Schema Explanation
 
-To learn more about Next.js, take a look at the following resources:
+`prisma/schema.prisma` includes:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `users`: host profile (single default owner user).
+- `event_types`: meeting templates with slug, duration, buffer settings.
+- `availability`: weekly day/time windows with timezone.
+- `date_override`: blocked date support (bonus feature).
+- `bookings`: guest bookings, statuses, anti-overlap constraints.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Key integrity and performance:
 
-## Deploy on Vercel
+- `@@unique([eventTypeId, startTime])` prevents double booking race conditions.
+- Indexes on `event_types.slug`, `availability(userId, dayOfWeek)`, and booking time lookups.
+- Cascade delete relations to keep data clean.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 4) Folder Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+src/
+  app/
+    api/
+      availability/route.ts
+      bookings/route.ts
+      bookings/[id]/route.ts
+      event-types/route.ts
+      event-types/[id]/route.ts
+      public/event-types/[slug]/route.ts
+      slots/route.ts
+    availability/page.tsx
+    book/[slug]/page.tsx
+    book/[slug]/confirmation/page.tsx
+    event-types/new/page.tsx
+    event-types/[id]/edit/page.tsx
+    page.tsx
+  components/
+    providers/query-provider.tsx
+    availability-form.tsx
+    bookings-list.tsx
+    dashboard-shell.tsx
+    event-type-form.tsx
+    event-type-list.tsx
+    public-booking-form.tsx
+    ui/*
+  controllers/
+  lib/
+  routes/
+  services/
+prisma/
+  schema.prisma
+  seed.ts
+```
+
+## 5) API Design
+
+Implemented REST endpoints:
+
+- `POST /api/event-types`
+- `GET /api/event-types`
+- `PUT /api/event-types/:id`
+- `DELETE /api/event-types/:id`
+- `POST /api/availability`
+- `GET /api/availability`
+- `GET /api/slots?date=...&eventTypeId=...`
+- `POST /api/bookings`
+- `GET /api/bookings`
+- `DELETE /api/bookings/:id`
+- `PATCH /api/bookings/:id` (host-side reschedule)
+- `GET /api/analytics`
+- `GET /api/public/bookings/:id/reschedule?token=...`
+- `PATCH /api/public/bookings/:id/reschedule?token=...`
+
+## 6) Feature Coverage
+
+- Event types management with slug generation and edit/delete.
+- Weekly availability with day toggles and time windows.
+- Public booking page with date picker + available slots.
+- Booking confirmation page.
+- Bookings dashboard for upcoming/past bookings + cancellation.
+- Reschedule support for host dashboard and guest secure token link.
+- Analytics overview (conversion, busiest day, top event type, funnel).
+- No-show risk score on upcoming bookings.
+- Buffer handling, date override model, and optional email confirmation (SMTP).
+
+## 7) Business Logic and Edge Cases
+
+- No overlapping booking writes through transaction + unique constraint.
+- Slot generation respects:
+  - availability windows
+  - existing bookings
+  - event duration
+  - buffer before/after
+- Prevents past time booking.
+- Validates invalid slug and malformed input with Zod.
+- Handles empty availability safely by returning no slots.
+
+## 8) Deployment (Vercel + Railway)
+
+### Vercel (Frontend + API routes)
+
+1. Push repository to GitHub.
+2. Import project in Vercel.
+3. Set environment variables from `.env.example`.
+4. Build command: `npm run build`.
+5. Output: default Next.js.
+
+### Railway (PostgreSQL)
+
+1. Create a new PostgreSQL service.
+2. Copy Railway `DATABASE_URL`.
+3. Set same `DATABASE_URL` in Vercel project env vars.
+4. Run migrations:
+   - locally: `DATABASE_URL=<railway-url> npm run prisma:migrate -- --name prod-init`
+   - or in CI using `prisma migrate deploy`.
+
+## 9) Local Development Workflow
+
+```bash
+npm run prisma:migrate -- --name <change_name>
+npm run prisma:generate
+npm run prisma:seed
+npm run dev
+```
