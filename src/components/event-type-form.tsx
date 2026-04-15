@@ -64,27 +64,38 @@ export function EventTypeForm({
         <CardTitle>{eventTypeId ? "Edit Event Type" : "Create Event Type"}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={form.handleSubmit((v) => mutation.mutate(v))} className="space-y-4">
+        <form onSubmit={form.handleSubmit(
+          (v) => mutation.mutate(v),
+          (errors) => {
+            console.log("Validation errors:", errors);
+            toast.error("Form validation failed. Check fields.");
+          }
+        )} className="space-y-4">
           <div className="space-y-2">
             <Label>Title</Label>
             <Input className="rounded-2xl" {...form.register("title")} />
+            {form.formState.errors.title && <p className="text-sm text-red-500">{form.formState.errors.title.message}</p>}
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
             <Textarea className="rounded-2xl" {...form.register("description")} />
+            {form.formState.errors.description && <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>}
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Duration (minutes)</Label>
               <Input type="number" className="rounded-2xl" {...form.register("duration")} />
+              {form.formState.errors.duration && <p className="text-sm text-red-500">{form.formState.errors.duration.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Buffer Before</Label>
               <Input type="number" className="rounded-2xl" {...form.register("bufferBefore")} />
+              {form.formState.errors.bufferBefore && <p className="text-sm text-red-500">{form.formState.errors.bufferBefore.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Buffer After</Label>
               <Input type="number" className="rounded-2xl" {...form.register("bufferAfter")} />
+              {form.formState.errors.bufferAfter && <p className="text-sm text-red-500">{form.formState.errors.bufferAfter.message}</p>}
             </div>
           </div>
 
@@ -115,42 +126,47 @@ export function EventTypeForm({
                 </p>
               )}
               {questions.fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="grid gap-3 rounded-xl border border-white/10 bg-white/5 p-3 md:grid-cols-[1fr_auto_auto]"
-                >
-                  <Input
-                    className="rounded-xl"
-                    placeholder="e.g. What would you like to discuss?"
-                    {...form.register(`customQuestions.${index}.label`)}
-                  />
-                  <label className="flex items-center gap-2 text-sm text-zinc-300">
-                    <Controller
-                      control={form.control}
-                      name={`customQuestions.${index}.required`}
-                      render={({ field }) => (
-                        <Checkbox
-                          checked={!!field.value}
-                          onCheckedChange={(checked) => field.onChange(checked === true)}
-                        />
-                      )}
+                <div key={field.id} className="space-y-1">
+                  <div className="grid gap-3 rounded-xl border border-white/10 bg-white/5 p-3 md:grid-cols-[1fr_auto_auto]">
+                    <Input
+                      className="rounded-xl"
+                      placeholder="e.g. What would you like to discuss?"
+                      {...form.register(`customQuestions.${index}.label`)}
                     />
-                    Required
-                  </label>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon-sm"
-                    className="rounded-xl"
-                    onClick={() => questions.remove(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <label className="flex items-center gap-2 text-sm text-zinc-300">
+                      <Controller
+                        control={form.control}
+                        name={`customQuestions.${index}.required`}
+                        render={({ field }) => (
+                          <Checkbox
+                            checked={!!field.value}
+                            onCheckedChange={(checked) => field.onChange(checked === true)}
+                          />
+                        )}
+                      />
+                      Required
+                    </label>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon-sm"
+                      className="rounded-xl"
+                      onClick={() => questions.remove(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {form.formState.errors.customQuestions?.[index]?.label && (
+                    <p className="text-sm text-red-500 pl-2">{form.formState.errors.customQuestions[index]?.label?.message}</p>
+                  )}
                 </div>
               ))}
             </div>
           </div>
-          <Button className="rounded-2xl" disabled={mutation.isPending}>
+          {Object.keys(form.formState.errors).length > 0 && (
+            <p className="text-sm text-red-500 font-medium">Please fix the errors above before saving. ({Object.keys(form.formState.errors).join(', ')})</p>
+          )}
+          <Button type="submit" className="rounded-2xl" disabled={mutation.isPending}>
             {mutation.isPending ? "Saving..." : "Save Event Type"}
           </Button>
         </form>
